@@ -95,16 +95,22 @@ WSGI_APPLICATION = 'forge_backend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
-DATABASES = {
-    'default': dj_database_url.config(
-        default=(
-            f"postgresql://{config('DB_USER')}:{config('DB_PASSWORD')}"
-            f"@{config('DB_HOST', default='localhost')}:{config('DB_PORT', default='5432')}"
-            f"/{config('DB_NAME')}"
-        ),
-        conn_max_age=600,
-    )
-}
+DATABASE_URL = config('DATABASE_URL', default=None)
+if DATABASE_URL:
+    DATABASES = {
+        'default': dj_database_url.config(default=DATABASE_URL, conn_max_age=600)
+    }
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': config('DB_NAME'),
+            'USER': config('DB_USER'),
+            'PASSWORD': config('DB_PASSWORD'),
+            'HOST': config('DB_HOST', default='localhost'),
+            'PORT': config('DB_PORT', default='5432'),
+        }
+    }
 
 
 # Password validation
