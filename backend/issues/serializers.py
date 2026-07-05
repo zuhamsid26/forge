@@ -22,10 +22,11 @@ class CommentSerializer(serializers.ModelSerializer):
 
 class ActivityLogSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
+    issue_title = serializers.CharField(source="issue.title", read_only=True)
 
     class Meta:
         model = ActivityLog
-        fields = ["id", "issue", "user", "action", "metadata", "created_at"]
+        fields = ["id", "issue", "issue_title", "user", "action", "metadata", "created_at"]
         read_only_fields = ["id", "user", "created_at"]
 
 

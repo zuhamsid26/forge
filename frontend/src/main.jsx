@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import './index.css'
 import { AuthProvider } from '@/contexts/AuthContext.jsx'
+import { WorkspaceProvider } from '@/contexts/WorkspaceContext.jsx'
 import { ThemeProvider } from '@/contexts/ThemeContext.jsx'
 import ProtectedRoute from '@/components/ProtectedRoute.jsx'
 import App from './App.jsx'
@@ -15,19 +16,21 @@ createRoot(document.getElementById('root')).render(
     <ThemeProvider>
       <BrowserRouter>
         <AuthProvider>
-          <Routes>
-            <Route path="/" element={<App />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/signup" element={<SignupPage />} />
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute>
-                  <DashboardPage />
-                </ProtectedRoute>
-              }
-            />
-          </Routes>
+          <WorkspaceProvider>
+            <Routes>
+              <Route path="/" element={<App />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/signup" element={<SignupPage />} />
+              <Route
+                path="/dashboard"
+                element={
+                  <ProtectedRoute>
+                    <DashboardPage />
+                  </ProtectedRoute>
+                }
+              />
+            </Routes>
+          </WorkspaceProvider>
         </AuthProvider>
       </BrowserRouter>
     </ThemeProvider>

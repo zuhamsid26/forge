@@ -9,6 +9,7 @@ from .serializers import ProjectSerializer
 class ProjectViewSet(viewsets.ModelViewSet):
     serializer_class = ProjectSerializer
     permission_classes = [permissions.IsAuthenticated]
+    filterset_fields = ["workspace", "archived"]
 
     def get_queryset(self):
         return Project.objects.filter(workspace__members__user=self.request.user).distinct()

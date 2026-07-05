@@ -4,6 +4,7 @@ from rest_framework.exceptions import ValidationError as DRFValidationError
 
 from .models import Label, Issue, Comment, ActivityLog
 from .serializers import LabelSerializer, IssueSerializer, CommentSerializer, ActivityLogSerializer
+from .filters import IssueFilter
 from .services import IssueService
 from core.choices import ActivityAction
 
@@ -19,7 +20,7 @@ class LabelViewSet(viewsets.ModelViewSet):
 class IssueViewSet(viewsets.ModelViewSet):
     serializer_class = IssueSerializer
     permission_classes = [permissions.IsAuthenticated]
-    filterset_fields = ["project", "status", "priority", "assignee"]
+    filterset_class = IssueFilter
     ordering_fields = ["created_at", "updated_at", "due_date", "priority"]
     search_fields = ["title", "description"]
 
