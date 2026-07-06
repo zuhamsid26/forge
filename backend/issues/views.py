@@ -8,10 +8,13 @@ from .filters import IssueFilter
 from .services import IssueService
 from core.choices import ActivityAction
 
+from django.db.models import Case, When, Value, IntegerField
+
 
 class LabelViewSet(viewsets.ModelViewSet):
     serializer_class = LabelSerializer
     permission_classes = [permissions.IsAuthenticated]
+    filterset_fields = ["workspace"]
 
     def get_queryset(self):
         return Label.objects.filter(workspace__members__user=self.request.user).distinct()
@@ -21,11 +24,22 @@ class IssueViewSet(viewsets.ModelViewSet):
     serializer_class = IssueSerializer
     permission_classes = [permissions.IsAuthenticated]
     filterset_class = IssueFilter
-    ordering_fields = ["created_at", "updated_at", "due_date", "priority"]
+    ordering_fields = ["created_at", "updated_at", "due_date", "priority_rank"]
     search_fields = ["title", "description"]
 
     def get_queryset(self):
-        return Issue.objects.filter(project__workspace__members__user=self.request.user).distinct()
+        priority_rank = Case(
+            When(priority="LOW", then=Value(1)),
+            When(priority="MEDIUM", then=Value(2)),
+            When(priority="HIGH", then=Value(3)),
+            When(priority="CRITICAL", then=Value(4)),
+            output_field=IntegerField(),
+        )
+        return (
+            Issue.objects.filter(project__workspace__members__user=self.request.user)
+            .annotate(priority_rank=priority_rank)
+            .distinct()
+        )
 
     def perform_create(self, serializer):
         assignee = serializer.validated_data.get("assignee")
@@ -50,9 +64,10 @@ class IssueViewSet(viewsets.ModelViewSet):
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
     permission_classes = [permissions.IsAuthenticated]
+    filterset_fields = ["issue"]
 
     def get_queryset(self):
-        return Comment.objects.filter(issue__project__workspace__members__user=self.request.user).distinct()
+        return Comment.objects.filter(issue__project__workspace__members__user=self.request.user).distinct().order_by("created_at")
 
     def perform_create(self, serializer):
         issue = serializer.validated_data["issue"]
@@ -63,6 +78,11 @@ class CommentViewSet(viewsets.ModelViewSet):
 class ActivityLogViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = ActivityLogSerializer
     permission_classes = [permissions.IsAuthenticated]
+    filterset_fields = ["issue"]
 
     def get_queryset(self):
-        return ActivityLog.objects.filter(issue__project__workspace__members__user=self.request.user).distinct()
+        return (
+            ActivityLog.objects.filter(issue__project__workspace__members__user=self.request.user)
+            .distinct()
+            .order_by("-created_at")
+        )

@@ -3,6 +3,8 @@ from rest_framework import serializers
 from users.serializers import UserSerializer
 from .models import Label, Issue, Comment, ActivityLog
 
+from users.models import User
+
 
 class LabelSerializer(serializers.ModelSerializer):
     class Meta:
@@ -32,17 +34,22 @@ class ActivityLogSerializer(serializers.ModelSerializer):
 
 class IssueSerializer(serializers.ModelSerializer):
     assignee = UserSerializer(read_only=True)
+    assignee_id = serializers.PrimaryKeyRelatedField(
+        source="assignee", queryset=User.objects.all(), write_only=True,
+        required=False, allow_null=True,
+    )
     reporter = UserSerializer(read_only=True)
     labels = LabelSerializer(many=True, read_only=True)
     label_ids = serializers.PrimaryKeyRelatedField(
         source="labels", queryset=Label.objects.all(), many=True, write_only=True, required=False
     )
+    project_name = serializers.CharField(source="project.name", read_only=True)
 
     class Meta:
         model = Issue
         fields = [
-            "id", "project", "title", "description", "status", "priority",
-            "assignee", "reporter", "due_date", "labels", "label_ids",
+            "id", "project", "project_name", "title", "description", "status", "priority",
+            "assignee", "assignee_id", "reporter", "due_date", "labels", "label_ids",
             "created_at", "updated_at",
         ]
         read_only_fields = ["id", "reporter", "created_at", "updated_at"]
