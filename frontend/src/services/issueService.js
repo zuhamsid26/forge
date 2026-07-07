@@ -20,4 +20,30 @@ export const issueService = {
     })
     return data.results
   },
+
+  async list({ workspaceId, project, status, priority, assignee, search, ordering, page } = {}) {
+    const { data } = await api.get("/issues/", {
+      params: {
+        workspace: workspaceId,
+        project,
+        status,
+        priority,
+        assignee,
+        search,
+        ordering,
+        page,
+      },
+    })
+    return data
+  },
+
+  async get(issueId) {
+    const { data } = await api.get(`/issues/${issueId}/`)
+    return data
+  },
+
+  async update(issueId, payload) {
+    const { data } = await api.patch(`/issues/${issueId}/`, payload)
+    return data
+  },
 }
