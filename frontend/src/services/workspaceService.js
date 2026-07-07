@@ -20,4 +20,9 @@ export const workspaceService = {
     const { data } = await api.get(`/workspaces/${workspaceId}/dashboard/`)
     return data
   },
+
+  async getMembers(workspaceId) {
+    const { data } = await api.get(`/workspaces/${workspaceId}/members/`)
+    return data.results
+  },
 }

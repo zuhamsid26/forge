@@ -10,6 +10,8 @@ import App from './App.jsx'
 import LoginPage from './pages/LoginPage.jsx'
 import SignupPage from './pages/SignupPage.jsx'
 import DashboardPage from './pages/DashboardPage.jsx'
+import IssuesPage from './pages/IssuesPage.jsx'
+import IssueDetailPage from './pages/IssueDetailPage.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -28,6 +30,22 @@ createRoot(document.getElementById('root')).render(
                     <DashboardPage />
                   </ProtectedRoute>
                 }
+              />
+              <Route
+              path="/issues"
+              element={
+                <ProtectedRoute>
+                  <IssuesPage />
+                </ProtectedRoute>
+              }
+              />
+              <Route
+              path="/issues/:id"
+              element={
+                <ProtectedRoute>
+                  <IssueDetailPage />
+                </ProtectedRoute>
+              }
               />
             </Routes>
           </WorkspaceProvider>
