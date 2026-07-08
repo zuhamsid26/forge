@@ -53,12 +53,55 @@ class IssueViewSet(viewsets.ModelViewSet):
         ActivityLog.objects.create(issue=issue, user=self.request.user, action=ActivityAction.CREATED)
 
     def perform_update(self, serializer):
-        assignee = serializer.validated_data.get("assignee", serializer.instance.assignee)
+        instance = serializer.instance
+        old_status = instance.status
+        old_priority = instance.priority
+        old_assignee_id = instance.assignee_id
+        old_due_date = instance.due_date
+        old_label_ids = set(instance.labels.values_list("id", flat=True))
+
+        assignee = serializer.validated_data.get("assignee", instance.assignee)
         try:
-            IssueService.validate_assignee(issue_or_project=serializer.instance, assignee=assignee)
+            IssueService.validate_assignee(issue_or_project=instance, assignee=assignee)
         except DjangoValidationError as e:
             raise DRFValidationError(e.messages)
-        serializer.save()
+
+        issue = serializer.save()
+
+        if old_status != issue.status:
+            ActivityLog.objects.create(
+                issue=issue, user=self.request.user, action=ActivityAction.STATUS_CHANGED,
+                metadata={"from": old_status, "to": issue.status},
+            )
+
+        if old_assignee_id != issue.assignee_id:
+            ActivityLog.objects.create(
+                issue=issue, user=self.request.user, action=ActivityAction.ASSIGNED,
+                metadata={"from_id": old_assignee_id, "to_id": issue.assignee_id},
+            )
+
+        if old_priority != issue.priority:
+            ActivityLog.objects.create(
+                issue=issue, user=self.request.user, action=ActivityAction.UPDATED,
+                metadata={"field": "priority", "from": old_priority, "to": issue.priority},
+            )
+
+        old_due_date_str = old_due_date.isoformat() if old_due_date else None
+        new_due_date_str = issue.due_date.isoformat() if issue.due_date else None
+        if old_due_date_str != new_due_date_str:
+            ActivityLog.objects.create(
+                issue=issue, user=self.request.user, action=ActivityAction.UPDATED,
+                metadata={"field": "due_date", "from": old_due_date_str, "to": new_due_date_str},
+            )
+
+        new_label_ids = set(issue.labels.values_list("id", flat=True))
+        if old_label_ids != new_label_ids:
+            added = list(new_label_ids - old_label_ids)
+            removed = list(old_label_ids - new_label_ids)
+            ActivityLog.objects.create(
+                issue=issue, user=self.request.user, action=ActivityAction.UPDATED,
+                metadata={"field": "labels", "added": added, "removed": removed},
+            )
 
 
 class CommentViewSet(viewsets.ModelViewSet):
