@@ -12,6 +12,7 @@ import { issueService } from "@/services/issueService"
 import { useWorkspace } from "@/contexts/WorkspaceContext"
 import { projectService } from "@/services/projectService"
 import { dashboardService } from "@/services/dashboardService"
+import { StatCardsSkeleton, ChartsSkeleton, ProjectCardsSkeleton, IssueListSkeleton, ActivityListSkeleton } from "@/components/DashboardSkeletons"
 
 function DashboardPage() {
   const { activeWorkspace } = useWorkspace()
@@ -75,7 +76,12 @@ function DashboardPage() {
 
       <div className="mt-8">
         {statsLoading ? (
-          <p className="text-slate-500 dark:text-slate-400">Loading stats...</p>
+          <>
+            <StatCardsSkeleton />
+            <div className="mt-6">
+              <ChartsSkeleton />
+            </div>
+          </>
         ) : stats ? (
           <>
             <DashboardCards stats={stats} />
@@ -90,7 +96,7 @@ function DashboardPage() {
         <h2 className="text-lg font-semibold mb-4">Projects</h2>
 
         {projectsLoading ? (
-          <p className="text-slate-500 dark:text-slate-400">Loading projects...</p>
+          <ProjectCardsSkeleton />
         ) : projects.length === 0 ? (
           <p className="text-slate-500 dark:text-slate-400">No projects in this workspace.</p>
         ) : (
@@ -109,7 +115,7 @@ function DashboardPage() {
       <div className="mt-8">
         <h2 className="text-lg font-semibold mb-4">Recent Issues</h2>
         {recentIssuesLoading ? (
-          <p className="text-slate-500 dark:text-slate-400">Loading issues...</p>
+          <IssueListSkeleton rows={5} />
         ) : (
           <RecentIssues issues={recentIssues} />
         )}
@@ -118,7 +124,7 @@ function DashboardPage() {
       <div className="mt-8">
         <h2 className="text-lg font-semibold mb-4">Recent Activity</h2>
         {statsLoading ? (
-          <p className="text-slate-500 dark:text-slate-400">Loading activity...</p>
+          <ActivityListSkeleton rows={5} />
         ) : stats ? (
           <RecentActivity activity={stats.recent_activity} />
         ) : null}
@@ -127,7 +133,7 @@ function DashboardPage() {
       <div className="mt-8">
         <h2 className="text-lg font-semibold mb-4">Assigned to Me</h2>
         {assignedLoading ? (
-          <p className="text-slate-500 dark:text-slate-400">Loading your issues...</p>
+          <IssueListSkeleton rows={3} />
         ) : (
           <AssignedToMe issues={assignedIssues} />
         )}
