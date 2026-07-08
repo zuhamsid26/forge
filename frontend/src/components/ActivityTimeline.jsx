@@ -1,12 +1,17 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { activityService } from "@/services/activityService"
 
-const ACTION_LABELS = {
-  CREATED: "created this issue",
-  UPDATED: "updated this issue",
-  ASSIGNED: "was assigned",
-  STATUS_CHANGED: "changed the status",
-  COMMENTED: "commented",
+const STATUS_LABELS = {
+  TODO: "To Do",
+  IN_PROGRESS: "In Progress",
+  DONE: "Done",
+}
+
+const PRIORITY_LABELS = {
+  LOW: "Low",
+  MEDIUM: "Medium",
+  HIGH: "High",
+  CRITICAL: "Critical",
 }
 
 function timeAgo(dateString) {
@@ -20,9 +25,88 @@ function timeAgo(dateString) {
   return `${days}d ago`
 }
 
-function ActivityTimeline({ issueId, refreshKey }) {
+function formatDate(dateStr) {
+  if (!dateStr) return null
+  return new Date(dateStr + "T00:00:00").toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  })
+}
+
+function describeEntry(entry, memberMap, labelMap) {
+  const meta = entry.metadata || {}
+
+  switch (entry.action) {
+    case "CREATED":
+      return "created this issue"
+
+    case "COMMENTED":
+      return "commented"
+
+    case "STATUS_CHANGED": {
+      const from = STATUS_LABELS[meta.from] ?? meta.from
+      const to = STATUS_LABELS[meta.to] ?? meta.to
+      return `changed the status from ${from} to ${to}`
+    }
+
+    case "ASSIGNED": {
+      const fromName = meta.from_id ? memberMap[meta.from_id] : null
+      const toName = meta.to_id ? memberMap[meta.to_id] : null
+      if (!fromName && toName) return `assigned this issue to ${toName}`
+      if (fromName && !toName) return `unassigned this issue (was ${fromName})`
+      if (fromName && toName) return `reassigned this issue from ${fromName} to ${toName}`
+      return "was assigned"
+    }
+
+    case "UPDATED": {
+      if (meta.field === "priority") {
+        const from = PRIORITY_LABELS[meta.from] ?? meta.from
+        const to = PRIORITY_LABELS[meta.to] ?? meta.to
+        return `changed priority from ${from} to ${to}`
+      }
+      if (meta.field === "due_date") {
+        const from = formatDate(meta.from)
+        const to = formatDate(meta.to)
+        if (!from && to) return `set due date to ${to}`
+        if (from && !to) return `removed the due date (was ${from})`
+        return `changed due date from ${from} to ${to}`
+      }
+      if (meta.field === "labels") {
+        const added = (meta.added || []).map((id) => labelMap[id] ?? "a label")
+        const removed = (meta.removed || []).map((id) => labelMap[id] ?? "a label")
+        const parts = []
+        if (added.length) parts.push(`added ${added.join(", ")}`)
+        if (removed.length) parts.push(`removed ${removed.join(", ")}`)
+        return parts.length ? parts.join("; ") : "updated labels"
+      }
+      return "updated this issue"
+    }
+
+    default:
+      return entry.action.toLowerCase()
+  }
+}
+
+function ActivityTimeline({ issueId, refreshKey, members = [], allLabels = [] }) {
   const [activity, setActivity] = useState([])
   const [loading, setLoading] = useState(true)
+
+  const memberMap = useMemo(() => {
+    const map = {}
+    members.forEach((m) => {
+      map[m.user.id] = `${m.user.first_name} ${m.user.last_name}`.trim()
+    })
+    return map
+  }, [members])
+
+  const labelMap = useMemo(() => {
+    const map = {}
+    allLabels.forEach((l) => {
+      map[l.id] = l.name
+    })
+    return map
+  }, [allLabels])
 
   useEffect(() => {
     setLoading(true)
@@ -48,7 +132,7 @@ function ActivityTimeline({ issueId, refreshKey }) {
             <span className="font-medium text-slate-900 dark:text-white">
               {entry.user.first_name}
             </span>{" "}
-            {ACTION_LABELS[entry.action] ?? entry.action.toLowerCase()}
+            {describeEntry(entry, memberMap, labelMap)}
           </p>
           <span className="text-xs text-slate-400 shrink-0">{timeAgo(entry.created_at)}</span>
         </div>

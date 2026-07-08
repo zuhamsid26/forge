@@ -56,6 +56,7 @@ function IssueDetailPage() {
 
     const updated = await issueService.update(issue.id, { label_ids: newIds })
     setIssue(updated)
+    setActivityRefreshKey((k) => k + 1)
   }
 
   async function handleAssigneeChange(e) {
@@ -63,24 +64,27 @@ function IssueDetailPage() {
     const assigneeId = value === "" ? null : Number(value)
     const updated = await issueService.update(issue.id, { assignee_id: assigneeId })
     setIssue(updated)
+    setActivityRefreshKey((k) => k + 1)
   }
 
   async function handleStatusChange(e) {
     const updated = await issueService.update(issue.id, { status: e.target.value })
     setIssue(updated)
+    setActivityRefreshKey((k) => k + 1)
   }
 
   async function handlePriorityChange(e) {
     const updated = await issueService.update(issue.id, { priority: e.target.value })
     setIssue(updated)
+    setActivityRefreshKey((k) => k + 1)
   }
 
   async function handleDueDateChange(e) {
     const value = e.target.value || null
     const updated = await issueService.update(issue.id, { due_date: value })
     setIssue(updated)
+    setActivityRefreshKey((k) => k + 1)
   }
-
   useEffect(() => {
     setLoading(true)
     issueService
@@ -244,7 +248,12 @@ function IssueDetailPage() {
             <h2 className="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-3">
               Activity Timeline
             </h2>
-            <ActivityTimeline issueId={issue.id} refreshKey={activityRefreshKey} />
+            <ActivityTimeline
+              issueId={issue.id}
+              refreshKey={activityRefreshKey}
+              members={members}
+              allLabels={allLabels}
+            />
           </div>
         </div>
       </div>
