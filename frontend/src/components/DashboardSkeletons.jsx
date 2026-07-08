@@ -103,3 +103,35 @@ export function ActivityListSkeleton({ rows = 5 }) {
     </div>
   )
 }
+
+
+export function IssueTableSkeleton({ rows = 8 }) {
+  return (
+    <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-hidden">
+      <table className="w-full text-sm">
+        <thead className="bg-slate-50 dark:bg-slate-700/50 text-left text-slate-500 dark:text-slate-400">
+          <tr>
+            <th className="px-4 py-3 font-medium">Title</th>
+            <th className="px-4 py-3 font-medium">Project</th>
+            <th className="px-4 py-3 font-medium">Status</th>
+            <th className="px-4 py-3 font-medium">Priority</th>
+            <th className="px-4 py-3 font-medium">Assignee</th>
+            <th className="px-4 py-3 font-medium">Due Date</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
+          {Array.from({ length: rows }).map((_, i) => (
+            <tr key={i}>
+              <td className="px-4 py-3"><Skeleton className="h-4 w-32" /></td>
+              <td className="px-4 py-3"><Skeleton className="h-4 w-20" /></td>
+              <td className="px-4 py-3"><Skeleton className="h-5 w-16 rounded-full" /></td>
+              <td className="px-4 py-3"><Skeleton className="h-4 w-14" /></td>
+              <td className="px-4 py-3"><Skeleton className="h-4 w-16" /></td>
+              <td className="px-4 py-3"><Skeleton className="h-4 w-14" /></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}

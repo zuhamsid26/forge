@@ -5,6 +5,7 @@ import { useWorkspace } from "@/contexts/WorkspaceContext"
 import { issueService } from "@/services/issueService"
 import { projectService } from "@/services/projectService"
 import { useNavigate } from "react-router-dom"
+import { IssueTableSkeleton } from "@/components/DashboardSkeletons"
 
 const STATUS_STYLES = {
   TODO: "bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300",
@@ -163,7 +164,7 @@ function IssuesPage() {
 
       <div className="mt-6">
         {loading ? (
-          <p className="text-slate-500 dark:text-slate-400">Loading issues...</p>
+          <IssueTableSkeleton rows={8} />
         ) : issues.length === 0 ? (
           <p className="text-slate-500 dark:text-slate-400">No issues found.</p>
         ) : (
