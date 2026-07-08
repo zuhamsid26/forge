@@ -9,6 +9,8 @@ import { labelService } from "@/services/labelService"
 import { useWorkspace } from "@/contexts/WorkspaceContext"
 import { workspaceService } from "@/services/workspaceService"
 import ActivityTimeline from "@/components/ActivityTimeline"
+import { Skeleton } from "@/components/ui/skeleton"
+import { IssueDetailSkeleton } from "@/components/DashboardSkeletons"
 
 const STATUS_STYLES = {
   TODO: "bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300",
@@ -96,7 +98,11 @@ function IssueDetailPage() {
   if (loading) {
     return (
       <div className="min-h-screen p-8 bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
-        <p className="text-slate-500 dark:text-slate-400">Loading issue...</p>
+        <div className="flex justify-between items-center">
+          <Skeleton className="h-4 w-32" />
+          <Skeleton className="h-8 w-8 rounded-full" />
+        </div>
+        <IssueDetailSkeleton />
       </div>
     )
   }

@@ -135,3 +135,66 @@ export function IssueTableSkeleton({ rows = 8 }) {
     </div>
   )
 }
+
+export function IssueDetailSkeleton() {
+  return (
+    <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Main content */}
+      <div className="lg:col-span-2 space-y-6">
+        <div>
+          <Skeleton className="h-4 w-24 mb-2" />
+          <Skeleton className="h-7 w-2/3" />
+        </div>
+
+        <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-5">
+          <Skeleton className="h-4 w-24 mb-3" />
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-3/4" />
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-5">
+          <Skeleton className="h-4 w-24 mb-3" />
+          <div className="space-y-3">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-5/6" />
+          </div>
+        </div>
+      </div>
+
+      {/* Sidebar */}
+      <div className="space-y-4">
+        <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-5 space-y-4">
+          {["Status", "Priority", "Assignee", "Reporter", "Due Date"].map((label) => (
+            <div key={label}>
+              <Skeleton className="h-3 w-16 mb-1.5" />
+              <Skeleton className="h-8 w-full rounded-lg" />
+            </div>
+          ))}
+          <div>
+            <Skeleton className="h-3 w-16 mb-2" />
+            <div className="flex flex-wrap gap-1.5">
+              <Skeleton className="h-6 w-16 rounded-full" />
+              <Skeleton className="h-6 w-20 rounded-full" />
+              <Skeleton className="h-6 w-14 rounded-full" />
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-5">
+          <Skeleton className="h-4 w-32 mb-3" />
+          <div className="space-y-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="flex justify-between items-start gap-2">
+                <Skeleton className="h-4 w-40" />
+                <Skeleton className="h-3 w-10 shrink-0" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
