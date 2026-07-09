@@ -42,7 +42,13 @@ function DashboardPage() {
   const [showCreateProject, setShowCreateProject] = useState(false)
 
   useEffect(() => {
-    if (!activeWorkspace) return
+    if (!activeWorkspace) {
+      setProjectsLoading(false)
+      setStatsLoading(false)
+      setRecentIssuesLoading(false)
+      setAssignedLoading(false)
+      return
+    }
 
     setProjectsLoading(true)
     setProjectsError(null)

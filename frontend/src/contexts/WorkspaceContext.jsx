@@ -37,11 +37,12 @@ export function WorkspaceProvider({ children }) {
   }, [])
 
   useEffect(() => {
+    setWorkspaces([])
+    setActiveWorkspaceId(null)
     if (user) {
       loadWorkspaces()
     } else {
-      setWorkspaces([])
-      setActiveWorkspaceId(null)
+      localStorage.removeItem(ACTIVE_WORKSPACE_KEY)
       setLoading(false)
     }
   }, [user, loadWorkspaces])

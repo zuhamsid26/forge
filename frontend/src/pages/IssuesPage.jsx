@@ -75,7 +75,10 @@ function IssuesPage() {
   }, [activeWorkspace])
 
   useEffect(() => {
-    if (!activeWorkspace) return
+    if (!activeWorkspace) {
+      setLoading(false)
+      return
+    }
 
     setLoading(true)
     setError(null)
@@ -266,7 +269,7 @@ function IssuesPage() {
           </>
         )}
       </div>
-      
+
       <CreateIssueModal
         open={showCreateIssue}
         onClose={() => setShowCreateIssue(false)}
