@@ -15,11 +15,15 @@ import { dashboardService } from "@/services/dashboardService"
 import { StatCardsSkeleton, ChartsSkeleton, ProjectCardsSkeleton, IssueListSkeleton, ActivityListSkeleton } from "@/components/DashboardSkeletons"
 import ErrorBanner from "@/components/ErrorBanner"
 import { getErrorMessage } from "@/utils/errorMessage"
+import CreateWorkspaceModal from "@/components/CreateWorkspaceModal"
+import AddMemberModal from "@/components/AddMemberModal"
+import CreateProjectModal from "@/components/CreateProjectModal"
 
 
 function DashboardPage() {
-  const { activeWorkspace } = useWorkspace()
+  const { activeWorkspace, refetchWorkspaces, selectWorkspace } = useWorkspace()
   const { user } = useAuth()
+  const isAdmin = activeWorkspace && user && activeWorkspace.owner.id === user.id
   const [projects, setProjects] = useState([])
   const [projectsLoading, setProjectsLoading] = useState(true)
   const [stats, setStats] = useState(null)
@@ -33,6 +37,9 @@ function DashboardPage() {
   const [recentIssuesError, setRecentIssuesError] = useState(null)
   const [assignedError, setAssignedError] = useState(null)
   const [retryKey, setRetryKey] = useState(0)
+  const [showCreateWorkspace, setShowCreateWorkspace] = useState(false)
+  const [showAddMember, setShowAddMember] = useState(false)
+  const [showCreateProject, setShowCreateProject] = useState(false)
 
   useEffect(() => {
     if (!activeWorkspace) return
@@ -90,6 +97,20 @@ function DashboardPage() {
         <h1 className="text-2xl font-bold">Dashboard</h1>
         <div className="flex items-center gap-3">
           <WorkspaceSelector />
+          <button
+            onClick={() => setShowCreateWorkspace(true)}
+            className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-sm hover:bg-slate-50 dark:hover:bg-slate-700"
+          >
+            + Workspace
+          </button>
+          {isAdmin && (
+            <button
+              onClick={() => setShowAddMember(true)}
+              className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-sm hover:bg-slate-50 dark:hover:bg-slate-700"
+            >
+              + Member
+            </button>
+          )}
           <ThemeToggle />
         </div>
       </div>
@@ -115,7 +136,17 @@ function DashboardPage() {
       </div>
 
       <div className="mt-8">
-        <h2 className="text-lg font-semibold mb-4">Projects</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold">Projects</h2>
+          {activeWorkspace && (
+            <button
+              onClick={() => setShowCreateProject(true)}
+              className="px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-sm hover:bg-indigo-700"
+            >
+              + New Project
+            </button>
+          )}
+        </div>
 
         {projectsError ? (
           <ErrorBanner message={projectsError} onRetry={() => setRetryKey((k) => k + 1)} />
@@ -168,6 +199,33 @@ function DashboardPage() {
           <AssignedToMe issues={assignedIssues} />
         )}
       </div>
+
+      <CreateWorkspaceModal
+        open={showCreateWorkspace}
+        onClose={() => setShowCreateWorkspace(false)}
+        onCreated={async (workspace) => {
+          await refetchWorkspaces()
+          selectWorkspace(workspace.id)
+        }}
+      />
+
+      {activeWorkspace && (
+        <AddMemberModal
+          open={showAddMember}
+          onClose={() => setShowAddMember(false)}
+          workspaceId={activeWorkspace.id}
+          onAdded={() => refetchWorkspaces()}
+        />
+      )}
+
+      {activeWorkspace && (
+        <CreateProjectModal
+          open={showCreateProject}
+          onClose={() => setShowCreateProject(false)}
+          workspaceId={activeWorkspace.id}
+          onCreated={(project) => setProjects((prev) => [...prev, project])}
+        />
+      )}
 
     </div>
   )

@@ -25,4 +25,9 @@ export const workspaceService = {
     const { data } = await api.get(`/workspaces/${workspaceId}/members/`)
     return data.results
   },
+
+  async addMember(workspaceId, username) {
+    const { data } = await api.post(`/workspaces/${workspaceId}/members/`, { username })
+    return data
+  },
 }

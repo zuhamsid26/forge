@@ -8,6 +8,8 @@ import { useNavigate } from "react-router-dom"
 import { IssueTableSkeleton } from "@/components/DashboardSkeletons"
 import ErrorBanner from "@/components/ErrorBanner"
 import { getErrorMessage } from "@/utils/errorMessage"
+import CreateIssueModal from "@/components/CreateIssueModal"
+import { workspaceService } from "@/services/workspaceService"
 
 const STATUS_STYLES = {
   TODO: "bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300",
@@ -59,9 +61,17 @@ function IssuesPage() {
   const [error, setError] = useState(null)
   const [retryKey, setRetryKey] = useState(0)
 
+  const [members, setMembers] = useState([])
+  const [showCreateIssue, setShowCreateIssue] = useState(false)
+
   useEffect(() => {
     if (!activeWorkspace) return
     projectService.list(activeWorkspace.id).then(setProjects)
+  }, [activeWorkspace])
+
+  useEffect(() => {
+    if (!activeWorkspace) return
+    workspaceService.getMembers(activeWorkspace.id).then(setMembers)
   }, [activeWorkspace])
 
   useEffect(() => {
@@ -104,6 +114,13 @@ function IssuesPage() {
         <h1 className="text-2xl font-bold">Issues</h1>
         <div className="flex items-center gap-3">
           <WorkspaceSelector />
+          <button
+            onClick={() => setShowCreateIssue(true)}
+            disabled={projects.length === 0}
+            className="px-3 py-2 rounded-lg bg-indigo-600 text-white text-sm hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            + New Issue
+          </button>
           <ThemeToggle />
         </div>
       </div>
@@ -249,6 +266,15 @@ function IssuesPage() {
           </>
         )}
       </div>
+      
+      <CreateIssueModal
+        open={showCreateIssue}
+        onClose={() => setShowCreateIssue(false)}
+        projects={projects}
+        members={members}
+        onCreated={() => setRetryKey((k) => k + 1)}
+      />
+
     </div>
   )
 }

@@ -46,4 +46,9 @@ export const issueService = {
     const { data } = await api.patch(`/issues/${issueId}/`, payload)
     return data
   },
+
+  async create(payload) {
+    const { data } = await api.post("/issues/", payload)
+    return data
+  },
 }
