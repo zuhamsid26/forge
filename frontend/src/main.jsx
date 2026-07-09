@@ -12,45 +12,48 @@ import SignupPage from './pages/SignupPage.jsx'
 import DashboardPage from './pages/DashboardPage.jsx'
 import IssuesPage from './pages/IssuesPage.jsx'
 import IssueDetailPage from './pages/IssueDetailPage.jsx'
+import ErrorBoundary from '@/components/ErrorBoundary.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <ThemeProvider>
-      <BrowserRouter>
-        <AuthProvider>
-          <WorkspaceProvider>
-            <Routes>
-              <Route path="/" element={<App />} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/signup" element={<SignupPage />} />
-              <Route
-                path="/dashboard"
+    <ErrorBoundary>
+      <ThemeProvider>
+        <BrowserRouter>
+          <AuthProvider>
+            <WorkspaceProvider>
+              <Routes>
+                <Route path="/" element={<App />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/signup" element={<SignupPage />} />
+                <Route
+                  path="/dashboard"
+                  element={
+                    <ProtectedRoute>
+                      <DashboardPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                path="/issues"
                 element={
                   <ProtectedRoute>
-                    <DashboardPage />
+                    <IssuesPage />
                   </ProtectedRoute>
                 }
-              />
-              <Route
-              path="/issues"
-              element={
-                <ProtectedRoute>
-                  <IssuesPage />
-                </ProtectedRoute>
-              }
-              />
-              <Route
-              path="/issues/:id"
-              element={
-                <ProtectedRoute>
-                  <IssueDetailPage />
-                </ProtectedRoute>
-              }
-              />
-            </Routes>
-          </WorkspaceProvider>
-        </AuthProvider>
-      </BrowserRouter>
-    </ThemeProvider>
+                />
+                <Route
+                path="/issues/:id"
+                element={
+                  <ProtectedRoute>
+                    <IssueDetailPage />
+                  </ProtectedRoute>
+                }
+                />
+              </Routes>
+            </WorkspaceProvider>
+          </AuthProvider>
+        </BrowserRouter>
+      </ThemeProvider>
+    </ErrorBoundary>
   </StrictMode>,
 )

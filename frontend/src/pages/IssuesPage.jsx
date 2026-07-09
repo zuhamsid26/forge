@@ -6,6 +6,8 @@ import { issueService } from "@/services/issueService"
 import { projectService } from "@/services/projectService"
 import { useNavigate } from "react-router-dom"
 import { IssueTableSkeleton } from "@/components/DashboardSkeletons"
+import ErrorBanner from "@/components/ErrorBanner"
+import { getErrorMessage } from "@/utils/errorMessage"
 
 const STATUS_STYLES = {
   TODO: "bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300",
@@ -54,6 +56,9 @@ function IssuesPage() {
   const [searchInput, setSearchInput] = useState("")
   const [ordering, setOrdering] = useState("-created_at")
 
+  const [error, setError] = useState(null)
+  const [retryKey, setRetryKey] = useState(0)
+
   useEffect(() => {
     if (!activeWorkspace) return
     projectService.list(activeWorkspace.id).then(setProjects)
@@ -63,6 +68,7 @@ function IssuesPage() {
     if (!activeWorkspace) return
 
     setLoading(true)
+    setError(null)
     issueService
       .list({
         workspaceId: activeWorkspace.id,
@@ -77,8 +83,9 @@ function IssuesPage() {
         setIssues(data.results)
         setCount(data.count)
       })
+      .catch((err) => setError(getErrorMessage(err, "Couldn't load issues.")))
       .finally(() => setLoading(false))
-  }, [activeWorkspace, projectFilter, statusFilter, priorityFilter, search, ordering, page])
+  }, [activeWorkspace, projectFilter, statusFilter, priorityFilter, search, ordering, page, retryKey])
 
   useEffect(() => {
     setPage(1)
@@ -163,7 +170,9 @@ function IssuesPage() {
       </div>
 
       <div className="mt-6">
-        {loading ? (
+        {error ? (
+          <ErrorBanner message={error} onRetry={() => setRetryKey((k) => k + 1)} />
+        ) : loading ? (
           <IssueTableSkeleton rows={8} />
         ) : issues.length === 0 ? (
           <p className="text-slate-500 dark:text-slate-400">No issues found.</p>

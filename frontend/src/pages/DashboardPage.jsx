@@ -13,6 +13,9 @@ import { useWorkspace } from "@/contexts/WorkspaceContext"
 import { projectService } from "@/services/projectService"
 import { dashboardService } from "@/services/dashboardService"
 import { StatCardsSkeleton, ChartsSkeleton, ProjectCardsSkeleton, IssueListSkeleton, ActivityListSkeleton } from "@/components/DashboardSkeletons"
+import ErrorBanner from "@/components/ErrorBanner"
+import { getErrorMessage } from "@/utils/errorMessage"
+
 
 function DashboardPage() {
   const { activeWorkspace } = useWorkspace()
@@ -25,43 +28,60 @@ function DashboardPage() {
   const [recentIssuesLoading, setRecentIssuesLoading] = useState(true)
   const [assignedIssues, setAssignedIssues] = useState([])
   const [assignedLoading, setAssignedLoading] = useState(true)
+  const [statsError, setStatsError] = useState(null)
+  const [projectsError, setProjectsError] = useState(null)
+  const [recentIssuesError, setRecentIssuesError] = useState(null)
+  const [assignedError, setAssignedError] = useState(null)
+  const [retryKey, setRetryKey] = useState(0)
 
   useEffect(() => {
     if (!activeWorkspace) return
 
     setProjectsLoading(true)
+    setProjectsError(null)
     projectService
       .list(activeWorkspace.id)
       .then(setProjects)
+      .catch((err) => setProjectsError(getErrorMessage(err, "Couldn't load projects.")))
       .finally(() => setProjectsLoading(false))
 
     setStatsLoading(true)
+    setStatsError(null)
     dashboardService
       .getStats(activeWorkspace.id)
       .then(setStats)
+      .catch((err) => setStatsError(getErrorMessage(err, "Couldn't load dashboard stats.")))
       .finally(() => setStatsLoading(false))
 
     setRecentIssuesLoading(true)
+    setRecentIssuesError(null)
     issueService
       .listRecent(activeWorkspace.id)
       .then(setRecentIssues)
+      .catch((err) => setRecentIssuesError(getErrorMessage(err, "Couldn't load recent issues.")))
       .finally(() => setRecentIssuesLoading(false))
 
     setAssignedLoading(true)
-      issueService
-        .listAssignedToMe(activeWorkspace.id, user.id)
-        .then(setAssignedIssues)
-        .finally(() => setAssignedLoading(false))
-  }, [activeWorkspace])
+    setAssignedError(null)
+    issueService
+      .listAssignedToMe(activeWorkspace.id, user.id)
+      .then(setAssignedIssues)
+      .catch((err) => setAssignedError(getErrorMessage(err, "Couldn't load your assigned issues.")))
+      .finally(() => setAssignedLoading(false))
+  }, [activeWorkspace, retryKey])
 
   async function handleArchiveToggle(project) {
-    const updated = project.archived
-      ? await projectService.unarchive(project.id)
-      : await projectService.archive(project.id)
+    try {
+      const updated = project.archived
+        ? await projectService.unarchive(project.id)
+        : await projectService.archive(project.id)
 
-    setProjects((prev) =>
-      prev.map((p) => (p.id === updated.id ? updated : p))
-    )
+      setProjects((prev) =>
+        prev.map((p) => (p.id === updated.id ? updated : p))
+      )
+    } catch (err) {
+      setProjectsError(getErrorMessage(err, "Couldn't update the project. Please try again."))
+    }
   }
 
   return (
@@ -75,7 +95,9 @@ function DashboardPage() {
       </div>
 
       <div className="mt-8">
-        {statsLoading ? (
+        {statsError ? (
+          <ErrorBanner message={statsError} onRetry={() => setRetryKey((k) => k + 1)} />
+        ) : statsLoading ? (
           <>
             <StatCardsSkeleton />
             <div className="mt-6">
@@ -95,7 +117,9 @@ function DashboardPage() {
       <div className="mt-8">
         <h2 className="text-lg font-semibold mb-4">Projects</h2>
 
-        {projectsLoading ? (
+        {projectsError ? (
+          <ErrorBanner message={projectsError} onRetry={() => setRetryKey((k) => k + 1)} />
+        ) : projectsLoading ? (
           <ProjectCardsSkeleton />
         ) : projects.length === 0 ? (
           <p className="text-slate-500 dark:text-slate-400">No projects in this workspace.</p>
@@ -114,7 +138,9 @@ function DashboardPage() {
 
       <div className="mt-8">
         <h2 className="text-lg font-semibold mb-4">Recent Issues</h2>
-        {recentIssuesLoading ? (
+        {recentIssuesError ? (
+          <ErrorBanner message={recentIssuesError} onRetry={() => setRetryKey((k) => k + 1)} />
+        ) : recentIssuesLoading ? (
           <IssueListSkeleton rows={5} />
         ) : (
           <RecentIssues issues={recentIssues} />
@@ -123,7 +149,9 @@ function DashboardPage() {
 
       <div className="mt-8">
         <h2 className="text-lg font-semibold mb-4">Recent Activity</h2>
-        {statsLoading ? (
+        {statsError ? (
+          <ErrorBanner message={statsError} onRetry={() => setRetryKey((k) => k + 1)} />
+        ) : statsLoading ? (
           <ActivityListSkeleton rows={5} />
         ) : stats ? (
           <RecentActivity activity={stats.recent_activity} />
@@ -132,7 +160,9 @@ function DashboardPage() {
 
       <div className="mt-8">
         <h2 className="text-lg font-semibold mb-4">Assigned to Me</h2>
-        {assignedLoading ? (
+        {assignedError ? (
+          <ErrorBanner message={assignedError} onRetry={() => setRetryKey((k) => k + 1)} />
+        ) : assignedLoading ? (
           <IssueListSkeleton rows={3} />
         ) : (
           <AssignedToMe issues={assignedIssues} />

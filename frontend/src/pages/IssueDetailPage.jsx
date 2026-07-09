@@ -11,6 +11,8 @@ import { workspaceService } from "@/services/workspaceService"
 import ActivityTimeline from "@/components/ActivityTimeline"
 import { Skeleton } from "@/components/ui/skeleton"
 import { IssueDetailSkeleton } from "@/components/DashboardSkeletons"
+import ErrorBanner from "@/components/ErrorBanner"
+import { getErrorMessage } from "@/utils/errorMessage"
 
 const STATUS_STYLES = {
   TODO: "bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300",
@@ -39,6 +41,8 @@ function IssueDetailPage() {
   const [allLabels, setAllLabels] = useState([])
   const [members, setMembers] = useState([])
   const [activityRefreshKey, setActivityRefreshKey] = useState(0)
+  const [loadError, setLoadError] = useState(null)
+  const [actionError, setActionError] = useState(null)
 
   useEffect(() => {
     if (!activeWorkspace) return
@@ -56,42 +60,70 @@ function IssueDetailPage() {
       ? currentIds.filter((id) => id !== labelId)
       : [...currentIds, labelId]
 
-    const updated = await issueService.update(issue.id, { label_ids: newIds })
-    setIssue(updated)
-    setActivityRefreshKey((k) => k + 1)
+    setActionError(null)
+    try {
+      const updated = await issueService.update(issue.id, { label_ids: newIds })
+      setIssue(updated)
+      setActivityRefreshKey((k) => k + 1)
+    } catch (err) {
+      setActionError(getErrorMessage(err, "Couldn't update labels."))
+    }
   }
 
   async function handleAssigneeChange(e) {
     const value = e.target.value
     const assigneeId = value === "" ? null : Number(value)
-    const updated = await issueService.update(issue.id, { assignee_id: assigneeId })
-    setIssue(updated)
-    setActivityRefreshKey((k) => k + 1)
+    setActionError(null)
+    try {
+      const updated = await issueService.update(issue.id, { assignee_id: assigneeId })
+      setIssue(updated)
+      setActivityRefreshKey((k) => k + 1)
+    } catch (err) {
+      setActionError(getErrorMessage(err, "Couldn't update assignee."))
+    }
   }
 
   async function handleStatusChange(e) {
-    const updated = await issueService.update(issue.id, { status: e.target.value })
-    setIssue(updated)
-    setActivityRefreshKey((k) => k + 1)
+    setActionError(null)
+    try {
+      const updated = await issueService.update(issue.id, { status: e.target.value })
+      setIssue(updated)
+      setActivityRefreshKey((k) => k + 1)
+    } catch (err) {
+      setActionError(getErrorMessage(err, "Couldn't update status."))
+    }
   }
 
   async function handlePriorityChange(e) {
-    const updated = await issueService.update(issue.id, { priority: e.target.value })
-    setIssue(updated)
-    setActivityRefreshKey((k) => k + 1)
+    setActionError(null)
+    try {
+      const updated = await issueService.update(issue.id, { priority: e.target.value })
+      setIssue(updated)
+      setActivityRefreshKey((k) => k + 1)
+    } catch (err) {
+      setActionError(getErrorMessage(err, "Couldn't update priority."))
+    }
   }
 
   async function handleDueDateChange(e) {
     const value = e.target.value || null
-    const updated = await issueService.update(issue.id, { due_date: value })
-    setIssue(updated)
-    setActivityRefreshKey((k) => k + 1)
+    setActionError(null)
+    try {
+      const updated = await issueService.update(issue.id, { due_date: value })
+      setIssue(updated)
+      setActivityRefreshKey((k) => k + 1)
+    } catch (err) {
+      setActionError(getErrorMessage(err, "Couldn't update due date."))
+    }
   }
+
   useEffect(() => {
     setLoading(true)
+    setLoadError(null)
     issueService
       .get(id)
       .then(setIssue)
+      .catch((err) => setLoadError(getErrorMessage(err, "Couldn't load this issue.")))
       .finally(() => setLoading(false))
   }, [id])
 
@@ -103,6 +135,21 @@ function IssueDetailPage() {
           <Skeleton className="h-8 w-8 rounded-full" />
         </div>
         <IssueDetailSkeleton />
+      </div>
+    )
+  }
+
+  if (loadError) {
+    return (
+      <div className="min-h-screen p-8 bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
+        <Link
+          to="/issues"
+          className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 mb-6"
+        >
+          <ArrowLeft size={16} />
+          Back to Issues
+        </Link>
+        <ErrorBanner message={loadError} />
       </div>
     )
   }
@@ -165,6 +212,7 @@ function IssueDetailPage() {
         {/* Sidebar */}
         <div className="space-y-4">
           <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-5 space-y-4">
+            {actionError && <ErrorBanner message={actionError} />}
             <div>
               <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Status</p>
               <select

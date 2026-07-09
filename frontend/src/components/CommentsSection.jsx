@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react"
 import { commentService } from "@/services/commentService"
 
+import ErrorBanner from "@/components/ErrorBanner"
+import { getErrorMessage } from "@/utils/errorMessage"
+
 function timeAgo(dateString) {
   const seconds = Math.floor((Date.now() - new Date(dateString)) / 1000)
   if (seconds < 60) return "just now"
@@ -17,12 +20,16 @@ function CommentsSection({ issueId, onCommentPosted }) {
   const [loading, setLoading] = useState(true)
   const [newComment, setNewComment] = useState("")
   const [submitting, setSubmitting] = useState(false)
+  const [loadError, setLoadError] = useState(null)
+  const [postError, setPostError] = useState(null)
 
   useEffect(() => {
     setLoading(true)
+    setLoadError(null)
     commentService
       .list(issueId)
       .then(setComments)
+      .catch((err) => setLoadError(getErrorMessage(err, "Couldn't load comments.")))
       .finally(() => setLoading(false))
   }, [issueId])
 
@@ -31,11 +38,14 @@ function CommentsSection({ issueId, onCommentPosted }) {
     if (!newComment.trim()) return
 
     setSubmitting(true)
+    setPostError(null)
     try {
       const created = await commentService.create(issueId, newComment.trim())
       setComments((prev) => [...prev, created])
       setNewComment("")
       onCommentPosted?.()
+    } catch (err) {
+      setPostError(getErrorMessage(err, "Couldn't post your comment. Please try again."))
     } finally {
       setSubmitting(false)
     }
@@ -43,7 +53,11 @@ function CommentsSection({ issueId, onCommentPosted }) {
 
   return (
     <div>
-      {loading ? (
+      {loadError ? (
+        <div className="mb-4">
+          <ErrorBanner message={loadError} />
+        </div>
+      ) : loading ? (
         <p className="text-sm text-slate-500 dark:text-slate-400">Loading comments...</p>
       ) : comments.length === 0 ? (
         <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">No comments yet.</p>
@@ -68,6 +82,11 @@ function CommentsSection({ issueId, onCommentPosted }) {
         </div>
       )}
 
+      {postError && (
+        <div className="mb-3">
+          <ErrorBanner message={postError} />
+        </div>
+      )}
       <form onSubmit={handleSubmit} className="flex gap-2">
         <input
           type="text"
