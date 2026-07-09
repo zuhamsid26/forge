@@ -13,6 +13,7 @@ import DashboardPage from './pages/DashboardPage.jsx'
 import IssuesPage from './pages/IssuesPage.jsx'
 import IssueDetailPage from './pages/IssueDetailPage.jsx'
 import ErrorBoundary from '@/components/ErrorBoundary.jsx'
+import NotFoundPage from './pages/NotFoundPage.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -49,6 +50,7 @@ createRoot(document.getElementById('root')).render(
                   </ProtectedRoute>
                 }
                 />
+                <Route path="*" element={<NotFoundPage />} />
               </Routes>
             </WorkspaceProvider>
           </AuthProvider>
