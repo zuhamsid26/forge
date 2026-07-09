@@ -7,5 +7,5 @@ router.register(r"", WorkspaceViewSet, basename="workspace")
 
 urlpatterns = [
     path("<int:pk>/dashboard/", DashboardView.as_view(), name="workspace-dashboard"),
-    path("<int:workspace_pk>/members/", WorkspaceMemberViewSet.as_view({"get": "list"}), name="workspace-members"),
+    path("<int:workspace_pk>/members/", WorkspaceMemberViewSet.as_view({"get": "list", "post": "create"}), name="workspace-members"),
 ] + router.urls

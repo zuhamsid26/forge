@@ -5,6 +5,9 @@ from django.utils import timezone
 from core.choices import WorkspaceRole, IssueStatus
 from .models import Workspace, WorkspaceMember
 
+from django.core.exceptions import ValidationError
+from users.models import User
+
 
 class WorkspaceService:
     """
@@ -32,6 +35,24 @@ class WorkspaceService:
     @staticmethod
     def is_member(*, workspace, user):
         return WorkspaceMember.objects.filter(workspace=workspace, user=user).exists()
+    
+    @staticmethod
+    @transaction.atomic
+    def add_member(*, workspace, username, added_by):
+        if not WorkspaceService.is_admin(workspace=workspace, user=added_by):
+            raise ValidationError("Only workspace admins can add members.")
+
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            raise ValidationError(f"No user found with username '{username}'.")
+
+        if WorkspaceService.is_member(workspace=workspace, user=user):
+            raise ValidationError(f"{user.username} is already a member of this workspace.")
+
+        return WorkspaceMember.objects.create(
+            workspace=workspace, user=user, role=WorkspaceRole.MEMBER,
+        )
 
 
 class DashboardService:

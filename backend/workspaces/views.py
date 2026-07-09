@@ -1,10 +1,12 @@
 from rest_framework import generics
 from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
-from rest_framework import viewsets, permissions
+from rest_framework import viewsets, permissions, mixins, status
+from django.core.exceptions import ValidationError as DjangoValidationError
+from rest_framework.exceptions import ValidationError as DRFValidationError
 
 from .models import Workspace, WorkspaceMember
-from .serializers import WorkspaceSerializer, WorkspaceMemberSerializer
+from .serializers import WorkspaceSerializer, WorkspaceMemberSerializer, WorkspaceMemberCreateSerializer
 from .services import WorkspaceService, DashboardService
 from .dashboard_serializers import DashboardStatsSerializer
 
@@ -25,12 +27,33 @@ class WorkspaceViewSet(viewsets.ModelViewSet):
         serializer.instance = workspace
 
 
-class WorkspaceMemberViewSet(viewsets.ReadOnlyModelViewSet):
-    serializer_class = WorkspaceMemberSerializer
+class WorkspaceMemberViewSet(mixins.ListModelMixin, mixins.CreateModelMixin, viewsets.GenericViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         return WorkspaceMember.objects.filter(workspace_id=self.kwargs["workspace_pk"])
+
+    def get_serializer_class(self):
+        if self.action == "create":
+            return WorkspaceMemberCreateSerializer
+        return WorkspaceMemberSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        workspace = get_object_or_404(Workspace, pk=self.kwargs["workspace_pk"])
+        try:
+            member = WorkspaceService.add_member(
+                workspace=workspace,
+                username=serializer.validated_data["username"],
+                added_by=request.user,
+            )
+        except DjangoValidationError as e:
+            raise DRFValidationError(e.messages)
+
+        output_serializer = WorkspaceMemberSerializer(member)
+        return Response(output_serializer.data, status=status.HTTP_201_CREATED)
 
 
 class DashboardView(generics.GenericAPIView):

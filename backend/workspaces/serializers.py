@@ -23,3 +23,7 @@ class WorkspaceSerializer(serializers.ModelSerializer):
 
     def get_member_count(self, obj):
         return obj.members.count()
+
+
+class WorkspaceMemberCreateSerializer(serializers.Serializer):
+    username = serializers.CharField(write_only=True)
